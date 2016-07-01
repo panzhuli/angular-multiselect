@@ -46,6 +46,7 @@ angular.module('am.multiselect', [])
         scope.items = [];
         scope.header = 'Select';
         scope.multiple = isMultiple;
+        scope.allChecked = false;
         scope.disabled = false;
         scope.onBlur = attrs.ngBlur || angular.noop;
 
@@ -212,15 +213,31 @@ angular.module('am.multiselect', [])
                     angular.forEach(newVal, function (i) {
                         if (angular.equals(item.model, i)) {
                             item.checked = true;
+                            evaluateCheckedAll();
                         }
                     });
                 });
             }
         }
 
+        function evaluateCheckedAll () {
+            var totalItemsChecked = 0;
+            var items =  getItemsList();
+            angular.forEach(items, function (item) {
+                if (item.checked) {
+                    totalItemsChecked += 1;
+                }
+            });
+            scope.allChecked = ( totalItemsChecked === items.length );
+        }
+
+        function getItemsList () {
+            return (scope.searchText && scope.searchText.label.length > 0) ? $filter('filter')(scope.items, scope.searchText) : scope.items;
+        }
+
         scope.checkAll = function () {
             if (!isMultiple) return;
-            var items = (scope.searchText && scope.searchText.label.length > 0) ? $filter('filter')(scope.items, scope.searchText) : scope.items;
+            var items = getItemsList();
             angular.forEach(items, function (item) {
                 item.checked = true;
             });
@@ -228,10 +245,21 @@ angular.module('am.multiselect', [])
         };
 
         scope.uncheckAll = function () {
-            var items = (scope.searchText && scope.searchText.label.length > 0) ? $filter('filter')(scope.items, scope.searchText) : scope.items;
+            var items =  getItemsList();
             angular.forEach(items, function (item) {
                 item.checked = false;
             });
+            setModelValue(true);
+        };
+
+        scope.toggleSelectAll = function ($event) {
+            if (!isMultiple) return;
+            if (scope.allChecked) {
+                scope.uncheckAll();
+            } else {
+                scope.checkAll();
+            }
+            evaluateCheckedAll();
             setModelValue(true);
         };
 
@@ -242,7 +270,7 @@ angular.module('am.multiselect', [])
             } else {
                 selectMultiple(item);
             }
-        }
+        };
         }
     };
 }])
